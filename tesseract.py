@@ -4,7 +4,7 @@ from pytesseract.pytesseract import Output
 
 ocr.pytesseract.tesseract_cmd = "C:/Users/Chuno/AppData/Local/Programs/Tesseract-OCR/tesseract.exe"
 
-img = Image.open("images/documento_recortado.png")
+img = Image.open("images/cnh_full.jpg")
 
 print(img)
 

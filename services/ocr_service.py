@@ -17,7 +17,6 @@ DELETE = [
 ]
 
 
-
 def extract_document_info(filename: str, delete: bool = True) -> dict:
     reader = Reader(lang_list=['pt', 'en', 'la'], gpu=False, verbose=False)
     
@@ -79,6 +78,53 @@ def extract_document_info(filename: str, delete: bool = True) -> dict:
         data['naturalidade'] = result[index]
     else:
         data['naturalidade'] = None
+
+    if delete:
+        os.remove(filename)
+
+    return data
+
+
+def extract_driver_license_info(filename: str, delete: bool = True) -> dict:
+    # TODO: implement a better OCR strategy to read a driver license data and convert it into a JSON object...
+    reader = Reader(['pt', 'en', 'la'], gpu=False)
+
+    result = reader.readtext(filename, width_ths=0.8, height_ths=1.0, slope_ths=1.0)
+    result = map(lambda detection: detection[1].upper(), result)
+    result = list(map(lambda detection: string_utils.remove_accents(detection).upper().strip(), result))
+
+    ignore_list = []
+
+    for string in ignore_list:
+        index = string_utils.find_index(result, string)
+
+        if index != -1:
+            result.pop(index)
+
+    index = string_utils.find_index(result, 'DOC IDENTIDADE / ORG EMISSOR UF') \
+            or string_utils.find_index(result, 'DOC IDENTIDADE') \
+            or string_utils.find_index(result, 'ORG EMISSOR UF')
+
+    data = {}
+
+    fields = {
+        'rg': r'(\d{1,2})\.?(\d{3})\.?(\d{3})-?(\d{1}|X|x$)'
+    }
+
+    funcs = {
+        'rg': lambda x: re.sub(r'[^\d]', '', x),
+    }
+
+    validations = {}
+
+    if index != -1:
+        index += 1
+
+        data['rg'] = result[index]
+        data['orgao_emissor'] = result[index + 1]
+        data['uf'] = result[index + 2]
+    else:
+        data['rg'] = data['orgao_emissor'] = data['uf'] = None
 
     if delete:
         os.remove(filename)
